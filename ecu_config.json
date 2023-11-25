@@ -1,50 +1,14 @@
 {
-  "vin": {
-    "value": "TESTVIN0123456789",
-    "description": "Vehicle Identification Number. Max 17 characters"
+  "uds_ecu_can_id": {
+    "value": "0x18DA007E",
+    "description": "CAN ID to receive from"
   },
-  "ecu_name": {
-    "value": "ECU_SIMULATOR",
-    "description": "Name of the ECU. Max 20 characters"
-  },
-  "fuel_level": {
-    "value": 50,
-    "description": "Fuel Level. Between 0 and 100"
-  },
-  "fuel_type": {
-    "value": 1,
-    "description": "Fuel type (e.g., 1=Gasoline). See https://en.wikipedia.org/wiki/OBD-II_PIDs#Fuel_Type_Coding"
-  },
-  "dtcs": {
-    "value": ["B1477", "P0001"],
-    "description": "List of Diagnostic Trouble Codes. The list can contain Max 255 DTCs"
-  },
-  "obd_broadcast_address": {
-    "value": "0x7DF",
-    "description": "11-Bit broadcast address the ECU uses to receive OBD requests (functional addressing). The target address is: obd_ecu_address + 0x8"
-  },
-  "obd_ecu_address": {
-    "value": "0x7E0",
-    "description": "11-Bit physical address the ECU uses to response to an OBD request. The target address is: obd_ecu_address + 0x8"
-  },
-  "uds_ecu_address": {
-    "value": "0x7E1",
-    "description": "11-Bit physical address the ECU uses to receive and response to an UDS request (physical addressing). The target address is: uds_ecu_address + 0x8. The UDS module does not use functional addressing"
+  "uds_client_can_id": {
+    "value": "0x18DA7E00",
+    "description": "CAN ID to send on"
   },
   "can_interface": {
     "value": "vcan0",
     "description": "CAN Interface used by the ECU simulator"
-  },
-  "can_interface_type": {
-    "value": "virtual",
-    "description": "Two types are possible: virtual and hardware. If any other value is provided, the ecu-simulator does not set up the CAN interface and ISO-TP linux kernel module"
-  },
-  "can_bitrate": {
-    "value": "500000",
-    "description": "CAN bitrate (refer to the specification of your CAN hardware). Only applicable for can_interface_type: hardware"
-  },
-  "isotp_ko_file_path": {
-    "value": "/usr/lib/modules/5.3.0-kali2-amd64/kernel/net/can/can-isotp.ko",
-    "description": "File path of the ISO-TP Kernel module (see https://github.com/hartkopp/can-isotp)"
   }
 }

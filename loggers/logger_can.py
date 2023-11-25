@@ -1,10 +1,9 @@
 import can
 from loggers import logger_utils
-from addresses import ECU_ADDRESSES, TARGET_ADDRESSES
+from addresses import UDS_ECU_CAN_ID, UDS_CLIENT_CAN_ID
 
 LOG_TYPE = "can"
-
-BUS_TYPE = "socketcan_native"
+BUS_TYPE = "socketcan"
 
 CAN_MASK = 0x7FF
 
@@ -24,13 +23,7 @@ def create_can_bus():
 
 def get_filters():
     filters = []
-    for can_id in get_can_ids():
-        filters.append({"can_id": can_id, "can_mask": CAN_MASK, "extended": False})
+    filters.append({"can_id": UDS_ECU_CAN_ID, "can_mask": CAN_MASK, "extended": True})
+    filters.append({"can_id": UDS_CLIENT_CAN_ID, "can_mask": CAN_MASK, "extended": True})
     return filters
 
-
-def get_can_ids():
-    can_ids = []
-    can_ids.extend(ECU_ADDRESSES)
-    can_ids.extend(TARGET_ADDRESSES)
-    return can_ids
