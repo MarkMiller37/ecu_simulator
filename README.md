@@ -45,7 +45,7 @@ Set up CAN hardware interface. e.g.
 ip link add dev vcan0 type vcan
 # Bring the virtual CAN interface online.
 ip link set up vcan0
-
+```
 
 
 ## Logging 
