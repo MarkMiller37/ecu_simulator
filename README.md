@@ -46,13 +46,7 @@ ip link add dev vcan0 type vcan
 # Bring the virtual CAN interface online.
 ip link set up vcan0
 
-If you do not want to start the tool with root privileges, you can do the following:
-```
 
-# and then start the tool
-python3 ecu_simulator.py
-
-``` 
 
 ## Logging 
 
