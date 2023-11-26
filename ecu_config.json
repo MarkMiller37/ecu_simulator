@@ -1,9 +1,9 @@
 {
-  "uds_ecu_can_id": {
+  "uds_request_can_id": {
     "value": "0x18DA007E",
     "description": "CAN ID to receive from"
   },
-  "uds_client_can_id": {
+  "uds_response_can_id": {
     "value": "0x18DA7E00",
     "description": "CAN ID to send on"
   },
