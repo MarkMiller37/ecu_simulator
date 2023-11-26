@@ -17,23 +17,20 @@ This could be created from an openSYDE project by creating a derivative of
  
 Add further services for Dashboard:
 * write to Datapool
-* read from Datapool event driven; not feasible with isotp kernel module as a special frame type is used
+* read from Datapool event driven; a special TP frame type is used
 
 Support services for System Update
-Support services for Device Configuration; not feasible with isotp kernel module as a special frame type is used
+Support services for Device Configuration; a special TP frame type is used
 
 Maybe there is a way to inject the special openSYDE frame types into python isotp.
-So the first step would be to switch to the Python SW implementation instead from the kernel module.
-This would also remove the main Linux dependency.
 
 ## Requirements
 
 * Linux
 * Python3
 * [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt) Implementation of the CAN protocol. This kernel module is part of Linux. 
-* [ISO-TP kernel module](https://github.com/hartkopp/can-isotp) It is part of linux since kernel 5.10.
-* [isotp](https://can-isotp.readthedocs.io/en/latest/) The `ecu-simulator` only uses [isotp.socket](https://can-isotp.readthedocs.io/en/latest/isotp/socket.html), which is a wrapper for the ISO-TP kernel module.
-* [python-can](https://python-can.readthedocs.io/en/master/installation.html) The `ecu-simulator` uses this library to log CAN messages (see `loggers\logger_can.py`). **Note**: The bus type `socketcan` is used.  
+* [isotp](https://can-isotp.readthedocs.io/en/latest/) Python implementation of ISO-TP
+* [python-can](https://python-can.readthedocs.io/en/master/installation.html) 
 
 ## Usage 
 
