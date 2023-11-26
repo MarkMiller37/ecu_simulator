@@ -17,10 +17,14 @@ This could be created from an openSYDE project by creating a derivative of
  
 Add further services for Dashboard:
 * write to Datapool
-* read from Datapool event driven
- 
+* read from Datapool event driven; not feasible with isotp kernel module as a special frame type is used
+
 Support services for System Update
-Support services for Device Configuration
+Support services for Device Configuration; not feasible with isotp kernel module as a special frame type is used
+
+Maybe there is a way to inject the special openSYDE frame types into python isotp.
+So the first step would be to switch to the Python SW implementation instead from the kernel module.
+This would also remove the main Linux dependency.
 
 ## Requirements
 
