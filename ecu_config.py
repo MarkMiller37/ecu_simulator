@@ -7,11 +7,13 @@ CONFIG = json.load(open(CONFIG_FILE, "r"))
 
 
 def get_uds_request_can_id():
-    return create_address(CONFIG["uds_request_can_id"].get("value"))
+    id = 0x18DA007E | (int(CONFIG["server_node_id"].get("value"))<< 8)
+    return id
 
 
 def get_uds_response_can_id():
-    return create_address(CONFIG["uds_response_can_id"].get("value"))
+    id = 0x18DA7E00 | int(CONFIG["server_node_id"].get("value"))
+    return id
 
 
 def create_address(address):

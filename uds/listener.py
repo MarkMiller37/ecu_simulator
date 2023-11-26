@@ -12,13 +12,8 @@ CAN_INTERFACE = ecu_config.get_can_interface()
 def start():
     uds_stack_req = create_stack(rxid=UDS_REQUEST_CAN_ID, txid=UDS_RESPONSE_CAN_ID)
 
-    response = bytes([4]) 
-    uds_stack_req.send(response)
-
     while True:
-        #while uds_stack_req.transmitting():
         uds_stack_req.process()
-        #time.sleep(uds_stack_req.sleep_time())
 
         request = uds_stack_req.recv()
         if request is not None:

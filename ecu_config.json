@@ -1,11 +1,7 @@
 {
-  "uds_request_can_id": {
-    "value": "0x18DA007E",
-    "description": "CAN ID to receive from"
-  },
-  "uds_response_can_id": {
-    "value": "0x18DA7E00",
-    "description": "CAN ID to send on"
+  "server_node_id": {
+    "value": "00",
+    "description": "Node ID of the simulated server (part of communication CAN IDs)"
   },
   "can_interface": {
     "value": "vcan0",
