@@ -47,6 +47,7 @@ current_data_rates = [100,500,1000]
 current_event_based_transmissions = []
 current_last_event_based_send_times = [0,0,0]
 
+#data pool definition
 datapool_1_elements = [
    { "list": 0, "element": 0, "size": 2 },
    { "list": 0, "element": 1, "size": 2 },
@@ -67,9 +68,8 @@ datapool_information = [
 
 #table of defined services
 SERVICES = [
-    {"id": ECU_RESET_SID, "description": "ECUReset", "response": lambda request: get_0x11_response(request)},
-    {"id": DIAGNOSTIC_SESSION_CONTROL_SID, "description": "DiagnosticSessionControl", "response": lambda request: get_0x10_response(request)},
-    {"id": READ_DATA_BY_ID_SID, "description": "ReadDataById", "response": lambda request: get_0x22_response(request)},
+    {"id": DIAGNOSTIC_SESSION_CONTROL_SID, "description": "DiagnosticSessionControl", "response": lambda request: get_diagnostic_session_control_response(request)},
+    {"id": READ_DATA_BY_ID_SID, "description": "ReadDataById", "response": lambda request: get_read_data_by_id_response(request)},
     {"id": SECURITY_ACCESS_SID, "description": "SecurityAccess", "response": lambda request: get_security_access_response(request)},
     {"id": ROUTINE_CONTROL_SID, "description": "RoutineControl", "response": lambda request: get_routine_control_response(request)},
     {"id": WRITE_DATA_BY_ID_SID, "description": "WriteDataById", "response": lambda request: get_write_data_by_id_response(request)},
@@ -92,7 +92,7 @@ def process_service_request(request):
         return None
 
 
-def get_0x10_response(request):
+def get_diagnostic_session_control_response(request):
     if len(request) == 2:
         session_type = request[1]
         if session_type in DIAGNOSTIC_SESSION_TYPES:
@@ -103,20 +103,7 @@ def get_0x10_response(request):
     return get_negative_response(DIAGNOSTIC_SESSION_CONTROL_SID,  NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
-def get_0x11_response(request):
-    if len(request) == 2:
-        reset_type = request[1]
-        if is_reset_type_supported(reset_type):
-            positive_response = get_positive_response_sid(ECU_RESET_SID) + bytes([reset_type])
-            if reset_type == ECU_RESET_ENABLE_RAPID_POWER_SHUT_DOWN:
-                return positive_response + bytes([ECU_RESET_POWER_DOWN_TIME])
-            return positive_response
-        return get_negative_response(ECU_RESET_SID,  NRC_SUB_FUNCTION_NOT_SUPPORTED)
-    return get_negative_response(ECU_RESET_SID,  NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-
-
-#ReadDataById
-def get_0x22_response(request):
+def get_read_data_by_id_response(request):
     if len(request) == 3:
         identifier = request[1] << 8 | request[2]
         logger.info("ReadDataById: Requested ID " + hex(identifier) + ".")
