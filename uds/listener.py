@@ -15,6 +15,10 @@ def start():
     while True:
         uds_stack_req.process()
 
+        responses = services.send_event_based_responses()
+        for response in responses:
+            uds_stack_req.send(response)
+
         request = uds_stack_req.recv()
         if request is not None:
             log_request(request)
@@ -24,8 +28,10 @@ def start():
                     log_response(response)
                     uds_stack_req.send(response)
 
+
 def my_error_handler(error):
    logger.error('IsoTp error happened : %s - %s' % (error.__class__.__name__, str(error)))
+
 
 def create_stack(rxid, txid):
     try:

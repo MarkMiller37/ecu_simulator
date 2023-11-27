@@ -1,4 +1,5 @@
 import ecu_config as ecu_config
+import time
 from loggers.logger_app import logger
 
 #service IDs
@@ -40,6 +41,11 @@ NRC_REQUEST_OUT_OF_RANGE = 0x31
 
 #current state of ECU simulation
 current_session = DIAGNOSTIC_SESSION_TYPES[0]
+current_data_rates = [100,500,1000]
+#list of currently configured event based transmissions
+#elements: "data_pool", "list", "element", "rail", "last_send_time"
+current_event_based_transmissions = []
+current_last_event_based_send_times = [0,0,0]
 
 datapool_1_elements = [
    { "list": 0, "element": 0, "size": 2 },
@@ -68,6 +74,7 @@ SERVICES = [
     {"id": ROUTINE_CONTROL_SID, "description": "RoutineControl", "response": lambda request: get_routine_control_response(request)},
     {"id": WRITE_DATA_BY_ID_SID, "description": "WriteDataById", "response": lambda request: get_write_data_by_id_response(request)},
     {"id": READ_DP_DATA_BY_ID, "description": "ReadDpDataById", "response": lambda request: get_read_dp_data_by_id_response(request)},
+    {"id": READ_DP_DATA_EVENT_DRIVEN, "description": "ReadDpDataEventDriven", "response": lambda request: get_read_dp_data_event_driven_response(request)},
     {"id": TESTER_PRESENT_SID, "description": "TesterPresent", "response": lambda request: get_tester_present_response(request)}
 ]
 
@@ -209,24 +216,24 @@ def get_write_data_by_id_response(request):
         match identifier:
             case 0xA810:
                 if len(request) > 4:
-                   data_rate = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate1  Rate: " + hex(data_rate) + ".")
+                   current_data_rates[0] = request[3] << 8 | request[4]
+                   logger.info("Id: DataRate1  Rate: " + hex(current_data_rates[0] ) + ".")
                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
                 else:
                    logger.info("Incorrect DLC")
                    return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
             case 0xA811:
                 if len(request) > 4:
-                   data_rate = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate2  Rate: " + hex(data_rate) + ".")
+                   current_data_rates[1] = request[3] << 8 | request[4]
+                   logger.info("Id: DataRate2  Rate: " + hex(current_data_rates[1] ) + ".")
                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
                 else:
                    logger.info("Incorrect DLC")
                    return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
             case 0xA812:
                 if len(request) > 4:
-                   data_rate = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate3  Rate: " + hex(data_rate) + ".")
+                   current_data_rates[2] = request[3] << 8 | request[4]
+                   logger.info("Id: DataRate3  Rate: " + hex(current_data_rates[2] ) + ".")
                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
                 else:
                    logger.info("Incorrect DLC")
@@ -254,7 +261,90 @@ def get_read_dp_data_by_id_response(request):
         else:
            logger.info("Unknown DataPool")
            return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
-    return get_negative_response(READ_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+    return get_negative_response(READ_DP_DATA_BY_ID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+
+def get_read_dp_data_event_driven_response(request):
+    if (len(request) == 2) and (request[1] == 0):
+        #stop all
+        current_event_based_transmissions.clear()
+        logger.info("ReadDpDataEventDriven: StopAll")
+        return get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes(request[1])
+    elif len(request) >= 5:
+        rail = request[1]
+        data_pool_index = (request[2] >> 2) & 0x1F
+        list_index = ((request[2] << 8 | request[3]) >> 3) & 0x7F
+        element_index = (request[3] << 8 | request[4]) & 0x7FF
+        if len(request) == 9:
+           rail -= 4
+           logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
+                       "  Type: onchange  Rail: " + hex(rail))
+        else:
+           rail -= 1
+           logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
+                       "  Type: cyclic  Rail: " + hex(rail))
+
+        #do we know the requested element ?
+        found = False
+        if data_pool_index < len(datapool_information):
+           for element in datapool_information[data_pool_index].get("elements"):
+               if (element.get("list") == list_index) and (element.get("element") == element_index):
+                   #element known
+                   element_size = element.get("size")
+                   if element_size <= 4:
+                      found = True
+                      break
+           if found == False:
+               return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
+        else:
+           logger.info("Unknown DataPool")
+           return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
+
+        #threshold will be ignored; does not really bother client if we send too often
+        new_transmission = {"data_pool": data_pool_index, "list": list_index, "element": element_index, "rail": rail }
+        found = False
+        #if entry already exists replace it; otherwise append:
+        for transmission in current_event_based_transmissions:
+            if transmission.get("data_pool") == data_pool_index and transmission.get("list") == list_index and \
+               transmission.get("element") == element:
+                transmission = new_transmission
+                found = True
+                break
+        if found == False:
+           current_event_based_transmissions.append(new_transmission)
+        #send initial response:
+        return get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes([request[2], request[3], request[4]])
+    return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+ 
+
+def send_event_based_responses():
+    responses = []
+
+    now_ms = time.monotonic_ns() / 1000 / 1000
+    for rail in range(3):
+       if (current_last_event_based_send_times[rail] + current_data_rates[rail] <= now_ms):
+           current_last_event_based_send_times[rail] = now_ms
+           
+           #send all transmissions on that rail:
+           for transmission in current_event_based_transmissions:
+               if transmission.get("rail") == rail:
+                   data_pool_index = transmission.get("data_pool")
+                   list_index = transmission.get("list")
+                   element_index = transmission.get("element")
+
+                   #find element in DP:
+                   for element in datapool_information[data_pool_index].get("elements"):
+                       if (element.get("list") == list_index) and (element.get("element") == element_index):
+                           element_size = element.get("size")
+                           #to get non-zero values we use now_ms
+                           response = get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes( \
+                                      [(data_pool_index << 2) | (list_index >> 5), \
+                                      ((list_index) << 3) | (element_index >> 8), \
+                                      element_index & 0xFF]) +\
+                                      bytes([int(now_ms) & 0xFF] * element_size)
+                           responses.append(response)
+                           break
+    return responses
+
 
 def get_tester_present_response(request):
     #ignore
