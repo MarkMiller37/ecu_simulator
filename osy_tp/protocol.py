@@ -3,8 +3,8 @@ import logging
 from copy import copy
 import binascii
 import time
-import isotp.address
-import isotp.errors
+import osy_tp.address
+import osy_tp.errors
 import math
 import enum
 
@@ -42,7 +42,7 @@ class PDU:
     Converts a CAN Message into a meaningful PDU such as SingleFrame, FirstFrame, ConsecutiveFrame, FlowControl
 
     :param msg: The CAN message
-    :type msg: `isotp.protocol.CanMessage`
+    :type msg: `osy_tp.protocol.CanMessage`
     """
     __slots__ = 'type', 'length', 'data', 'blocksize', 'stmin', 'stmin_sec', 'seqnum', 'flow_status', 'rx_dl', 'escape_sequence', 'can_dl'
 
@@ -277,16 +277,16 @@ class TransportLayer:
     """
     The IsoTP transport layer implementation
 
-    :param rxfn: Function to be called by the transport layer to read the CAN layer. Must return a :class:`isotp.CanMessage<isotp.CanMessage>` or None if no message has been received.
+    :param rxfn: Function to be called by the transport layer to read the CAN layer. Must return a :class:`osy_tp.CanMessage<osy_tp.CanMessage>` or None if no message has been received.
     :type rxfn: Callable
 
-    :param txfn: Function to be called by the transport layer to send a message on the CAN layer. This function should receive a :class:`isotp.CanMessage<isotp.CanMessage>`
+    :param txfn: Function to be called by the transport layer to send a message on the CAN layer. This function should receive a :class:`osy_tp.CanMessage<osy_tp.CanMessage>`
     :type txfn: Callable
 
-    :param address: The address information of CAN messages. Includes the addressing mode, txid/rxid, source/target address and address extension. See :class:`isotp.Address<isotp.Address>` for more details.
-    :type address: isotp.Address
+    :param address: The address information of CAN messages. Includes the addressing mode, txid/rxid, source/target address and address extension. See :class:`osy_tp.Address<osy_tp.Address>` for more details.
+    :type address: osy_tp.Address
 
-    :param error_handler: A function to be called when an error has been detected. An :class:`isotp.IsoTpError<isotp.IsoTpError>` (inheriting Exception class) will be given as sole parameter. See the :ref:`Error section<Errors>`
+    :param error_handler: A function to be called when an error has been detected. An :class:`osy_tp.IsoTpError<osy_tp.IsoTpError>` (inheriting Exception class) will be given as sole parameter. See the :ref:`Error section<Errors>`
     :type error_handler: Callable
 
     :param params: List of parameters for the transport layer
@@ -316,7 +316,7 @@ class TransportLayer:
             self.max_frame_size					= 4095
             self.can_fd							= False
             self.bitrate_switch                 = False
-            self.default_target_address_type    = isotp.address.TargetAddressType.Physical
+            self.default_target_address_type    = osy_tp.address.TargetAddressType.Physical
             self.rate_limit_max_bitrate         = 100000000
             self.rate_limit_window_size         = 0.2
             self.rate_limit_enable              = False
@@ -405,8 +405,8 @@ class TransportLayer:
             if not isinstance(self.default_target_address_type, int):
                 raise ValueError('default_target_address_type must be an integer')
 
-            if self.default_target_address_type not in [isotp.address.TargetAddressType.Physical, isotp.address.TargetAddressType.Functional]:
-                raise ValueError('default_target_address_type must be either be Physical (%d) or Functional (%d)' % (isotp.address.TargetAddressType.Physical, isotp.address.TargetAddressType.Functional))
+            if self.default_target_address_type not in [osy_tp.address.TargetAddressType.Physical, osy_tp.address.TargetAddressType.Functional]:
+                raise ValueError('default_target_address_type must be either be Physical (%d) or Functional (%d)' % (osy_tp.address.TargetAddressType.Physical, osy_tp.address.TargetAddressType.Functional))
 
             if not isinstance(self.rate_limit_max_bitrate, int):
                 raise ValueError('rate_limit_max_bitrate must be an integer')
@@ -537,7 +537,7 @@ class TransportLayer:
         :param data: The data to be sent
         :type data: bytearray
 
-        :param target_address_type: Optional parameter that can be Physical (0) for 1-to-1 communication or Functional (1) for 1-to-n. See :class:`isotp.TargetAddressType<isotp.TargetAddressType>`.
+        :param target_address_type: Optional parameter that can be Physical (0) for 1-to-1 communication or Functional (1) for 1-to-n. See :class:`osy_tp.TargetAddressType<osy_tp.TargetAddressType>`.
             If not provided, parameter :ref:`default_target_address_type<param_default_target_address_type>` will be used (default to `Physical`)
         :type target_address_type: int
 
@@ -557,14 +557,14 @@ class TransportLayer:
         if self.tx_queue.full():
             raise RuntimeError('Transmit queue is full')
 
-        if target_address_type == isotp.address.TargetAddressType.Functional:
+        if target_address_type == osy_tp.address.TargetAddressType.Functional:
             length_bytes = 1 if self.params.tx_data_length == 8 else 2
             maxlen = self.params.tx_data_length - length_bytes - len(self.address.tx_payload_prefix) 
 
             if len(data) > maxlen:
                 raise ValueError('Cannot send multipacket frame with Functional TargetAddressType')
 
-        self.tx_queue.put( {'data':data, 'target_address_type':target_address_type})	# frame is always an IsoTPFrame here
+        self.tx_queue.put( {'data':data, 'target_address_type':target_address_type})
 
     # Receive an IsoTP frame. Output of the layer
     def recv(self):
@@ -615,7 +615,7 @@ class TransportLayer:
     def check_timeouts_rx(self):
         # Check timeout first
         if self.timer_rx_cf.is_timed_out():
-            self.trigger_error(isotp.errors.ConsecutiveFrameTimeoutError("Reception of CONSECUTIVE_FRAME timed out."))
+            self.trigger_error(osy_tp.errors.ConsecutiveFrameTimeoutError("Reception of CONSECUTIVE_FRAME timed out."))
             self.stop_receiving()
 
     def process_rx(self, msg):
@@ -627,7 +627,7 @@ class TransportLayer:
         try:
             pdu = PDU(msg, start_of_data=self.address.rx_prefix_size)
         except Exception as e:
-            self.trigger_error(isotp.errors.InvalidCanDataError("Received invalid CAN frame. %s" % (str(e))))
+            self.trigger_error(osy_tp.errors.InvalidCanDataError("Received invalid CAN frame. %s" % (str(e))))
             self.stop_receiving()
             return
 
@@ -638,7 +638,7 @@ class TransportLayer:
 
         if pdu.type == PDU.Type.SINGLE_FRAME:
             if pdu.can_dl > 8 and pdu.escape_sequence == False:
-                self.trigger_error(isotp.errors.MissingEscapeSequenceError('For SingleFrames conveyed on a CAN message with data length (CAN_DL) > 8, length should be encoded on byte #1 and byte #0 should be 0x00'))
+                self.trigger_error(osy_tp.errors.MissingEscapeSequenceError('For SingleFrames conveyed on a CAN message with data length (CAN_DL) > 8, length should be encoded on byte #1 and byte #0 should be 0x00'))
                 return
 
         # Process the state machine
@@ -652,7 +652,7 @@ class TransportLayer:
             elif pdu.type == PDU.Type.FIRST_FRAME:
                 self.start_reception_after_first_frame_if_valid(pdu)
             elif pdu.type == PDU.Type.CONSECUTIVE_FRAME:
-                self.trigger_error(isotp.errors.UnexpectedConsecutiveFrameError('Received a ConsecutiveFrame while reception was idle. Ignoring'))
+                self.trigger_error(osy_tp.errors.UnexpectedConsecutiveFrameError('Received a ConsecutiveFrame while reception was idle. Ignoring'))
 
 
         elif self.rx_state == self.RxState.WAIT_CF:
@@ -660,18 +660,18 @@ class TransportLayer:
                 if pdu.data is not None:
                     self.rx_queue.put(copy(pdu.data))
                     self.rx_state = self.RxState.IDLE
-                    self.trigger_error(isotp.errors.ReceptionInterruptedWithSingleFrameError('Reception of IsoTP frame interrupted with a new SingleFrame'))
+                    self.trigger_error(osy_tp.errors.ReceptionInterruptedWithSingleFrameError('Reception of IsoTP frame interrupted with a new SingleFrame'))
 
             elif pdu.type == PDU.Type.FIRST_FRAME:
                 self.start_reception_after_first_frame_if_valid(pdu)
-                self.trigger_error(isotp.errors.ReceptionInterruptedWithFirstFrameError('Reception of IsoTP frame interrupted with a new FirstFrame'))
+                self.trigger_error(osy_tp.errors.ReceptionInterruptedWithFirstFrameError('Reception of IsoTP frame interrupted with a new FirstFrame'))
 
             elif pdu.type == PDU.Type.CONSECUTIVE_FRAME:
                 expected_seqnum = (self.last_seqnum +1) & 0xF
                 if pdu.seqnum == expected_seqnum:
                     bytes_to_receive = (self.rx_frame_length - len(self.rx_buffer) )
                     if pdu.rx_dl != self.actual_rxdl and pdu.rx_dl < bytes_to_receive:
-                        self.trigger_error(isotp.errors.ChangingInvalidRXDLError("Received a ConsecutiveFrame with RX_DL=%d while expected RX_DL=%d. Ignoring frame" % (pdu.rx_dl, self.actual_rxdl)))
+                        self.trigger_error(osy_tp.errors.ChangingInvalidRXDLError("Received a ConsecutiveFrame with RX_DL=%d while expected RX_DL=%d. Ignoring frame" % (pdu.rx_dl, self.actual_rxdl)))
                         return	
 
                     self.start_rx_cf_timer() 	# Received a CF message. Restart counter. Timeout handled above.
@@ -687,7 +687,7 @@ class TransportLayer:
                             self.timer_rx_cf.stop()         # We stop the timer until the flow control message is gone. This timer is reactivated in the process_tx().
                 else:
                     self.stop_receiving()
-                    self.trigger_error(isotp.errors.WrongSequenceNumberError('Received a ConsecutiveFrame with wrong SequenceNumber. Expecting 0x%X, Received 0x%X' % (expected_seqnum, pdu.seqnum)))
+                    self.trigger_error(osy_tp.errors.WrongSequenceNumberError('Received a ConsecutiveFrame with wrong SequenceNumber. Expecting 0x%X, Received 0x%X' % (expected_seqnum, pdu.seqnum)))
 
     def process_tx(self):
         output_msg = None 	 # Value outputed.  If None, no subsequent call to process_tx will be done.
@@ -709,17 +709,17 @@ class TransportLayer:
         if flow_control_frame is not None:
             if flow_control_frame.flow_status == PDU.FlowStatus.Overflow: 	# Needs to stop sending. 
                 self.stop_sending()
-                self.trigger_error(isotp.errors.OverflowError('Received a FlowControl PDU indicating an Overflow. Stopping transmission.'))
+                self.trigger_error(osy_tp.errors.OverflowError('Received a FlowControl PDU indicating an Overflow. Stopping transmission.'))
                 return
 
             if self.tx_state == self.TxState.IDLE:
-                self.trigger_error(isotp.errors.UnexpectedFlowControlError('Received a FlowControl message while transmission was Idle. Ignoring'))
+                self.trigger_error(osy_tp.errors.UnexpectedFlowControlError('Received a FlowControl message while transmission was Idle. Ignoring'))
             else:
                 if flow_control_frame.flow_status == PDU.FlowStatus.Wait:
                     if self.params.wftmax == 0:
-                        self.trigger_error(isotp.errors.UnsuportedWaitFrameError('Received a FlowControl requesting to wait, but wftmax is set to 0'))
+                        self.trigger_error(osy_tp.errors.UnsuportedWaitFrameError('Received a FlowControl requesting to wait, but wftmax is set to 0'))
                     elif self.wft_counter >= self.params.wftmax:
-                        self.trigger_error(isotp.errors.MaximumWaitFrameReachedError('Received %d wait frame which is the maximum set in params.wftmax' % (self.wft_counter)))
+                        self.trigger_error(osy_tp.errors.MaximumWaitFrameReachedError('Received %d wait frame which is the maximum set in params.wftmax' % (self.wft_counter)))
                         self.stop_sending()
                     else:
                         self.wft_counter += 1
@@ -744,7 +744,7 @@ class TransportLayer:
 
         # ======= Timeouts ======
         if self.timer_rx_fc.is_timed_out():
-            self.trigger_error(isotp.errors.FlowControlTimeoutError('Reception of FlowControl timed out. Stopping transmission'))
+            self.trigger_error(osy_tp.errors.FlowControlTimeoutError('Reception of FlowControl timed out. Stopping transmission'))
             self.stop_sending()
 
 
@@ -766,8 +766,20 @@ class TransportLayer:
                         size_on_first_byte = (len(self.tx_buffer) + len(self.address.tx_payload_prefix)) <= 7
                         size_offset = 1 if size_on_first_byte else 2
 
+                        # openSYDE special frame type ?
+                        if (len(self.tx_buffer) > 0) and (self.tx_buffer[0] == 0xBA):
+                            # Instead of sending regular service with SID 0xBA send OSF
+                            # upper nibble: 0xF for openSYDE single frame
+                            # lower nibble of PCI contains the specific service:
+                            # 1 = event driven DP read
+                            msg_data = self.address.tx_payload_prefix + bytearray([0xF1]) + self.tx_buffer[1:len(self.tx_buffer)]
+
+                            arbitration_id  = self.address.get_tx_arbitraton_id(popped_object['target_address_type'])
+                            msg_temp = self.make_tx_msg(arbitration_id, msg_data)
+                            output_msg = msg_temp
+
                         # Single frame
-                        if len(self.tx_buffer) <= self.params.tx_data_length-size_offset-len(self.address.tx_payload_prefix):	
+                        elif len(self.tx_buffer) <= self.params.tx_data_length-size_offset-len(self.address.tx_payload_prefix):	
                             if size_on_first_byte:
                                 msg_data 	= self.address.tx_payload_prefix + bytearray([0x0 | len(self.tx_buffer)]) + self.tx_buffer
                             else:
@@ -863,10 +875,10 @@ class TransportLayer:
 
     def set_address(self, address):
         """
-        Sets the layer :class:`Address<isotp.Address>`. Can be set after initialization if needed.
+        Sets the layer :class:`Address<osy_tp.Address>`. Can be set after initialization if needed.
         """
 
-        if not isinstance(address, isotp.address.Address):
+        if not isinstance(address, osy_tp.address.Address):
             raise ValueError('address must be a valid Address instance')
 
         self.address = address
@@ -1001,14 +1013,14 @@ class TransportLayer:
     def start_reception_after_first_frame_if_valid(self, pdu):
         self.empty_rx_buffer()
         if pdu.rx_dl not in [8,12,16,20,24,32,48,64]:
-            self.trigger_error(isotp.errors.InvalidCanFdFirstFrameRXDL("Received a FirstFrame with a RX_DL value of %d which is invalid according to ISO-15765-2" % (pdu.rx_dl)))
+            self.trigger_error(osy_tp.errors.InvalidCanFdFirstFrameRXDL("Received a FirstFrame with a RX_DL value of %d which is invalid according to ISO-15765-2" % (pdu.rx_dl)))
             self.stop_receiving()
             return
 
         self.actual_rxdl = pdu.rx_dl
 
         if pdu.length > self.params.max_frame_size:
-            self.trigger_error(isotp.errors.FrameTooLongError("Received a Frist Frame with a length of %d bytes, but params.max_frame_size is set to %d bytes. Ignoring" % (pdu.length, self.params.max_frame_size)))
+            self.trigger_error(osy_tp.errors.FrameTooLongError("Received a Frist Frame with a length of %d bytes, but params.max_frame_size is set to %d bytes. Ignoring" % (pdu.length, self.params.max_frame_size)))
             self.request_tx_flowcontrol(PDU.FlowStatus.Overflow)
             self.rx_state = self.RxState.IDLE	
         else:
@@ -1024,7 +1036,7 @@ class TransportLayer:
 
     def trigger_error(self, error):
         if self.error_handler is not None:
-            if hasattr(self.error_handler, '__call__') and isinstance(error, isotp.errors.IsoTpError):
+            if hasattr(self.error_handler, '__call__') and isinstance(error, osy_tp.errors.IsoTpError):
                 self.error_handler(error)
             else:
                 self.logger.warning('Given error handler is not a callable object.')
@@ -1065,15 +1077,15 @@ class TransportLayer:
 class CanStack(TransportLayer):
     """
     The IsoTP transport using `python-can <https://python-can.readthedocs.io>`__ as CAN layer. python-can must be installed in order to use this class.
-    All parameters except the ``bus`` parameter will be given to the :class:`TransportLayer<isotp.TransportLayer>` constructor
+    All parameters except the ``bus`` parameter will be given to the :class:`TransportLayer<osy_tp.TransportLayer>` constructor
 
     :param bus: A python-can bus object implementing ``recv`` and ``send``
     :type bus: BusABC
 
-    :param address: The address information of CAN messages. Includes the addressing mode, txid/rxid, source/target address and address extension. See :class:`isotp.Address<isotp.Address>` for more details.
-    :type address: isotp.Address
+    :param address: The address information of CAN messages. Includes the addressing mode, txid/rxid, source/target address and address extension. See :class:`osy_tp.Address<osy_tp.Address>` for more details.
+    :type address: osy_tp.Address
 
-    :param error_handler: A function to be called when an error has been detected. An :class:`isotp.protocol.IsoTpError<isotp.protocol.IsoTpError>` (inheriting Exception class) will be given as sole parameter
+    :param error_handler: A function to be called when an error has been detected. An :class:`osy_tp.protocol.IsoTpError<osy_tp.protocol.IsoTpError>` (inheriting Exception class) will be given as sole parameter
     :type error_handler: Callable
 
     :param params: List of parameters for the transport layer
