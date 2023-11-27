@@ -5,6 +5,9 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecu_config.json")
 
 CONFIG = json.load(open(CONFIG_FILE, "r"))
 
+def get_server_project_file():
+    return CONFIG["server_project_file"].get("value")
+
 
 def get_uds_request_can_id():
     id = 0x18DA007E | (int(CONFIG["server_node_id"].get("value"))<< 8)

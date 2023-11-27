@@ -1,7 +1,11 @@
 {
+  "server_project_file" : {
+    "value": "../openSYDE_Project/system_definition/node_esx_3cs/node_core.xml",
+    "description" : "Path to 'node_core.xml' file which describes the server node (part of an openSYDE project)."
+  },
   "server_node_id": {
-    "value": "00",
-    "description": "Node ID of the simulated server (part of communication CAN IDs)"
+    "value": "0",
+    "description": "Node ID of the simulated server (part of communication CAN IDs). Not contained in node_core.xml"
   },
   "can_interface": {
     "value": "vcan0",

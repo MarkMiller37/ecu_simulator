@@ -7,6 +7,8 @@ Modified to mock an ECU using the UDS-based openSYDE protocol.
 
 ## What's implemented
 
+Datapool configuration can be loaded from openSYDE "node_core.xml" file.
+
 Connect from openSYDE Dashboard basically works:
 
 * get current session
@@ -20,10 +22,6 @@ Connect from openSYDE Dashboard basically works:
 
 ## Ideas for improvement
 
-Datapool configuration is currently hard-coded in services.py.
-This could be created from an openSYDE project by creating a derivative of
- the SYDE Coder which could create constant tables.
- 
 Add further services for Dashboard:
 * write to Datapool
 
