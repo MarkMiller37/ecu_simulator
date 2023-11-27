@@ -84,7 +84,7 @@ class PDU:
         # Guarantee at least presence of byte #1
         if datalen > 0:
             hnb =  (msg_data[0] >> 4) & 0xF
-            if hnb > 3:
+            if hnb > 3 and hnb != 0xF: #0xF special openSYDE PCI
                 raise ValueError('Received message with unknown frame type %d' % hnb)
             self.type = int(hnb)
         else:
@@ -766,13 +766,14 @@ class TransportLayer:
                         size_on_first_byte = (len(self.tx_buffer) + len(self.address.tx_payload_prefix)) <= 7
                         size_offset = 1 if size_on_first_byte else 2
 
-                        # openSYDE special frame type ?
-                        if (len(self.tx_buffer) > 0) and (self.tx_buffer[0] == 0xBA):
-                            # Instead of sending regular service with SID 0xBA send OSF
+                        # openSYDE special frame type which would not fit in a single frame ?
+                        if (len(self.tx_buffer) == 8) and (self.tx_buffer[0] == 0xFA):
+                            # Instead of sending regular service with SID 0xBA send OSF (0xFA with "request" bit set)
                             # upper nibble: 0xF for openSYDE single frame
-                            # lower nibble of PCI contains the specific service:
-                            # 1 = event driven DP read
-                            msg_data = self.address.tx_payload_prefix + bytearray([0xF1]) + self.tx_buffer[1:len(self.tx_buffer)]
+                            # lower nibble of PCI contains the specific service: 1 = event driven DP read
+                            # we do not need a size byte as the DLC is used for this information
+                            # so the payload follows immediately after the patched PCI byte
+                            msg_data = self.address.tx_payload_prefix + bytearray([0xF1]) + self.tx_buffer[1:8]
 
                             arbitration_id  = self.address.get_tx_arbitraton_id(popped_object['target_address_type'])
                             msg_temp = self.make_tx_msg(arbitration_id, msg_data)
