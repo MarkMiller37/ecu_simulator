@@ -1,5 +1,5 @@
 import can
-import isotp
+import osy_tp
 from loggers import logger_utils
 from loggers.logger_utils import CAN_INTERFACE
 from loggers.logger_app import logger
@@ -36,8 +36,8 @@ def create_stack(rxid, txid):
     
     #configure isotp to use bus:
     tp_parameters = { "listen_mode" : True }
-    address = isotp.Address(addressing_mode= isotp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid, params=tp_parameters)
-    stack = isotp.CanStack(bus, address=address)
+    address = osy_tp.Address(addressing_mode= osy_tp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid, params=tp_parameters)
+    stack = osy_tp.CanStack(bus, address=address)
 
     return stack
 

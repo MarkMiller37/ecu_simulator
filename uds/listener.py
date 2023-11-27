@@ -1,4 +1,4 @@
-import isotp
+import osy_tp
 import can
 import ecu_config
 import time
@@ -34,11 +34,11 @@ def create_stack(rxid, txid):
         logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " + type(exception).__name__ + ".")
     
     #configure isotp to use bus:
-    addressing = isotp.Address(addressing_mode= isotp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid)
+    addressing = osy_tp.Address(addressing_mode= osy_tp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid)
 
     #BSmax must be 0 for openSYDE; otherwise the client will not be happy    
     tp_parameters = { "blocksize" : 0 }
-    stack = isotp.CanStack(bus, address=addressing, error_handler = my_error_handler, params=tp_parameters)
+    stack = osy_tp.CanStack(bus, address=addressing, error_handler = my_error_handler, params=tp_parameters)
 
     return stack
 
