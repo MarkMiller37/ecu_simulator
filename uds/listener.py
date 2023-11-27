@@ -1,7 +1,6 @@
-import osy_tp
 import can
+import osy_tp
 import ecu_config
-import time
 from uds import services
 from addresses import UDS_REQUEST_CAN_ID, UDS_RESPONSE_CAN_ID
 from loggers.logger_app import logger
@@ -30,14 +29,15 @@ def start():
 
 
 def my_error_handler(error):
-   logger.error('IsoTp error happened : %s - %s' % (error.__class__.__name__, str(error)))
+    logger.error('IsoTp error happened : %s - %s' % (error.__class__.__name__, str(error)))
 
 
 def create_stack(rxid, txid):
     try:
         bus = can.Bus(channel=CAN_INTERFACE, interface='socketcan')
     except Exception as exception:
-        logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " + type(exception).__name__ + ".")
+        logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " +\
+                      type(exception).__name__ + ".")
     
     #configure isotp to use bus:
     addressing = osy_tp.Address(addressing_mode= osy_tp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid)

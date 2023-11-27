@@ -1,4 +1,3 @@
-import ecu_config as ecu_config
 import time
 import osy_server
 from loggers.logger_app import logger
@@ -87,7 +86,7 @@ def get_read_data_by_id_response(request):
                 positive_response = get_positive_response_sid(READ_DATA_BY_ID_SID) + bytes([request[1], request[2], osy_server.TheOpenSydeServer.current_session])
                 return positive_response
             case _:
-               return get_negative_response(READ_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
+                return get_negative_response(READ_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
     return get_negative_response(READ_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -140,10 +139,9 @@ def get_routine_control_response(request):
                                         osy_server.TheOpenSydeServer.datapools[data_pool_index].version + \
                                         bytes([2, len(data_pool_name)]) + bytes(data_pool_name, 'utf-8')
                     return positive_response
-                else:
-                    logger.info(mode_string + "Unknown DataPool")
-                    #NRC_REQUEST_OUT_OF_RANGE: let client know this DP does not exist
-                    return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
+                logger.info(mode_string + "Unknown DataPool")
+                #NRC_REQUEST_OUT_OF_RANGE: let client know this DP does not exist
+                return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
             else:
                 logger.info(mode_string + "Routine: ReadDataPoolMetaData: incorrect DLC or sub-function")
                 return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
@@ -157,9 +155,8 @@ def get_routine_control_response(request):
                                         bytes([request[1], request[2], request[3], request[4]]) + \
                                         bytes([0]) #0: checksum matches; we are happy
                     return positive_response
-                else:
-                    logger.info(mode_string + "Unknown DataPool")
-                    return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
+                logger.info(mode_string + "Unknown DataPool")
+                return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
             else:
                 logger.info(mode_string + "Routine: VerifyDataPool: incorrect DLC or sub-function")
                 return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
@@ -176,30 +173,27 @@ def get_write_data_by_id_response(request):
         match identifier:
             case 0xA810:
                 if len(request) > 4:
-                   osy_server.TheOpenSydeServer.current_data_rates[0] = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate1  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[0]) + ".")
-                   return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                else:
-                   logger.info("Incorrect DLC")
-                   return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+                    osy_server.TheOpenSydeServer.current_data_rates[0] = request[3] << 8 | request[4]
+                    logger.info("Id: DataRate1  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[0]) + ".")
+                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
+                logger.info("Incorrect DLC")
+                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
             case 0xA811:
                 if len(request) > 4:
-                   osy_server.TheOpenSydeServer.current_data_rates[1] = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate2  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[1]) + ".")
-                   return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                else:
-                   logger.info("Incorrect DLC")
-                   return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+                    osy_server.TheOpenSydeServer.current_data_rates[1] = request[3] << 8 | request[4]
+                    logger.info("Id: DataRate2  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[1]) + ".")
+                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
+                logger.info("Incorrect DLC")
+                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
             case 0xA812:
                 if len(request) > 4:
-                   osy_server.TheOpenSydeServer.current_data_rates[2] = request[3] << 8 | request[4]
-                   logger.info("Id: DataRate3  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[2]) + ".")
-                   return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                else:
-                   logger.info("Incorrect DLC")
-                   return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+                    osy_server.TheOpenSydeServer.current_data_rates[2] = request[3] << 8 | request[4]
+                    logger.info("Id: DataRate3  Rate: " + hex(osy_server.TheOpenSydeServer.current_data_rates[2]) + ".")
+                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
+                logger.info("Incorrect DLC")
+                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
             case _:
-               return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
+                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
     return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -210,17 +204,17 @@ def get_read_dp_data_by_id_response(request):
         element_index = (request[2] << 8 | request[3]) & 0x7FF
         logger.info("ReadDpDataById: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index))
         if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
-           for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-               if (element.get("list") == list_index) and (element.get("element") == element_index):
-                   #element known
-                   element_size = element.get("size")
-                   #to get non-zero values we return the size as value of all returned bytes
-                   return get_positive_response_sid(READ_DP_DATA_BY_ID) + bytes([request[1], request[2], request[3]]) + \
-                          bytes([element_size] * element_size)
-           return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
+            for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
+                if (element.get("list") == list_index) and (element.get("element") == element_index):
+                    #element known
+                    element_size = element.get("size")
+                    #to get non-zero values we return the size as value of all returned bytes
+                    return get_positive_response_sid(READ_DP_DATA_BY_ID) + bytes([request[1], request[2], request[3]]) + \
+                           bytes([element_size] * element_size)
+            return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
         else:
-           logger.info("Unknown DataPool")
-           return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
+            logger.info("Unknown DataPool")
+            return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
     return get_negative_response(READ_DP_DATA_BY_ID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -236,29 +230,29 @@ def get_read_dp_data_event_driven_response(request):
         list_index = ((request[2] << 8 | request[3]) >> 3) & 0x7F
         element_index = (request[3] << 8 | request[4]) & 0x7FF
         if len(request) == 9:
-           rail -= 4
-           logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
-                       "  Type: onchange  Rail: " + hex(rail))
+            rail -= 4
+            logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
+                        "  Type: onchange  Rail: " + hex(rail))
         else:
-           rail -= 1
-           logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
-                       "  Type: cyclic  Rail: " + hex(rail))
+            rail -= 1
+            logger.info("ReadDpDataEventDriven: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
+                        "  Type: cyclic  Rail: " + hex(rail))
 
         #do we know the requested element ?
         found = False
         if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
-           for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-               if (element.get("list") == list_index) and (element.get("element") == element_index):
-                   #element known
-                   element_size = element.get("size")
-                   if element_size <= 4:
-                      found = True
-                      break
-           if found == False:
-               return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
+            for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
+                if (element.get("list") == list_index) and (element.get("element") == element_index):
+                    #element known
+                    element_size = element.get("size")
+                    if element_size <= 4:
+                        found = True
+                        break
+            if not found:
+                return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
         else:
-           logger.info("Unknown DataPool")
-           return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
+            logger.info("Unknown DataPool")
+            return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
 
         #threshold will be ignored; does not really bother client if we send too often
         new_transmission = {"data_pool": data_pool_index, "list": list_index, "element": element_index, "rail": rail }
@@ -266,44 +260,47 @@ def get_read_dp_data_event_driven_response(request):
         #if entry already exists replace it; otherwise append:
         for transmission in osy_server.TheOpenSydeServer.current_event_based_transmissions:
             if transmission.get("data_pool") == data_pool_index and transmission.get("list") == list_index and \
-               transmission.get("element") == element:
+               transmission.get("element") == element_index:
                 transmission = new_transmission
                 found = True
                 break
-        if found == False:
-           osy_server.TheOpenSydeServer.current_event_based_transmissions.append(new_transmission)
+        if not found:
+            osy_server.TheOpenSydeServer.current_event_based_transmissions.append(new_transmission)
         #send initial response:
         return get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes([request[2], request[3], request[4]])
     return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
- 
+
 
 def send_event_based_responses():
     responses = []
 
     now_ms = time.monotonic_ns() / 1000 / 1000
     for rail in range(3):
-       if (osy_server.TheOpenSydeServer.current_last_event_based_send_times[rail] + osy_server.TheOpenSydeServer.current_data_rates[rail] <= now_ms):
-           osy_server.TheOpenSydeServer.current_last_event_based_send_times[rail] = now_ms
-           
-           #send all transmissions on that rail:
-           for transmission in osy_server.TheOpenSydeServer.current_event_based_transmissions:
-               if transmission.get("rail") == rail:
-                   data_pool_index = transmission.get("data_pool")
-                   list_index = transmission.get("list")
-                   element_index = transmission.get("element")
+        if osy_server.TheOpenSydeServer.current_last_event_based_send_times[rail] + osy_server.TheOpenSydeServer.current_data_rates[rail] <= now_ms:
+            osy_server.TheOpenSydeServer.current_last_event_based_send_times[rail] = now_ms
 
-                   #find element in DP:
-                   for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-                       if (element.get("list") == list_index) and (element.get("element") == element_index):
-                           element_size = element.get("size")
-                           #to get non-zero values we use now_ms
-                           response = get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes( \
-                                      [(data_pool_index << 2) | (list_index >> 5), \
-                                      ((list_index) << 3) | (element_index >> 8), \
-                                      element_index & 0xFF]) +\
-                                      bytes([int(now_ms) & 0xFF] * element_size)
-                           responses.append(response)
-                           break
+            #send all transmissions on that rail:
+            for transmission in osy_server.TheOpenSydeServer.current_event_based_transmissions:
+                if transmission.get("rail") == rail:
+                    data_pool_index = transmission.get("data_pool")
+                    list_index = transmission.get("list")
+                    element_index = transmission.get("element")
+
+                    #find element in DP:
+                    for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
+                        if (element.get("list") == list_index) and (element.get("element") == element_index):
+                            element_size = element.get("size")
+                            #to get non-zero values we use now_ms
+                            response = get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes( \
+                                       [(data_pool_index << 2) | (list_index >> 5), \
+                                       ((list_index) << 3) | (element_index >> 8), \
+                                       element_index & 0xFF]) +\
+                                       bytes([int(now_ms) & 0xFF] * element_size)
+                            responses.append(response)
+                            logger.info("ReadDpDataEventDriven: Sending value for element " +\
+                                        hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) + \
+                                        "  Type: cyclic  Rail: " + hex(rail))
+                            break
     return responses
 
 

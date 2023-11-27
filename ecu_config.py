@@ -10,13 +10,13 @@ def get_server_project_file():
 
 
 def get_uds_request_can_id():
-    id = 0x18DA007E | (int(CONFIG["server_node_id"].get("value"))<< 8)
-    return id
+    identifier = 0x18DA007E | (int(CONFIG["server_node_id"].get("value"))<< 8)
+    return identifier
 
 
 def get_uds_response_can_id():
-    id = 0x18DA7E00 | int(CONFIG["server_node_id"].get("value"))
-    return id
+    identifier = 0x18DA7E00 | int(CONFIG["server_node_id"].get("value"))
+    return identifier
 
 
 def create_address(address):
@@ -29,6 +29,3 @@ def create_address(address):
 
 def get_can_interface():
     return CONFIG["can_interface"].get("value")
-
-
-

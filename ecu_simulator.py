@@ -1,4 +1,3 @@
-import os
 import sys
 from threading import Thread
 import ecu_config
@@ -14,9 +13,9 @@ def main():
     project_path = ecu_config.get_server_project_file()
 
     try:
-       osy_server.TheOpenSydeServer.LoadDefinitionFromXml(xml_path=project_path)
-    except:
-       logger_app.logger.error("Could not load server configuration.")
+        osy_server.TheOpenSydeServer.LoadDefinitionFromXml(xml_path=project_path)
+    except Exception:
+        logger_app.logger.error("Could not load server configuration.")
 
     start_can_logger_thread()
     start_isotp_logger_thread()
