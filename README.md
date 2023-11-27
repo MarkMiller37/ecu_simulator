@@ -7,7 +7,16 @@ Modified to mock an ECU using the UDS-based openSYDE protocol.
 
 ## What's implemented
 
-Connect from openSYDE Dashboard basically works.
+Connect from openSYDE Dashboard basically works:
+
+* get current session
+* activate extended session
+* request seed and send key
+* extract datapool names and versions
+* check data pool version
+* send data rates
+* confirmed read
+* cyclic and event based read
 
 ## Ideas for improvement
 
@@ -17,27 +26,23 @@ This could be created from an openSYDE project by creating a derivative of
  
 Add further services for Dashboard:
 * write to Datapool
-* read from Datapool event driven; a special TP frame type is used
 
 Support services for System Update
 Support services for Device Configuration; a special TP frame type is used
-
-Maybe there is a way to inject the special openSYDE frame types into python isotp.
 
 ## Requirements
 
 * Linux
 * Python3
 * [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt) Implementation of the CAN protocol. This kernel module is part of Linux. 
-* [isotp](https://can-isotp.readthedocs.io/en/latest/) Python implementation of ISO-TP
 * [python-can](https://python-can.readthedocs.io/en/master/installation.html) 
 
 ## Usage 
 
-Install required python libraries.
+Install required python library.
 I did so using a virtual python environment.
-Install the python-can and python-isotp packages via pip.
-Configure CAN-IDs to use in ecu_config.json
+Install the python-can package via pip.
+Configure server's openSYDE node-id to use in ecu_config.json
 Configure CAN interface to use in ecu_config.json (verified only with virtual vcan0)
 
 Set up CAN hardware interface. e.g.
@@ -47,39 +52,6 @@ ip link add dev vcan0 type vcan
 # Bring the virtual CAN interface online.
 ip link set up vcan0
 ```
-
-
-## Logging 
-
-The `ecu-simulator` provides 3 levels of logging: CAN, ISO-TP, and application level. For example, when the VIN is requested, the following is logged:
-
-* In `can_[Timestamp].log`
-
-```
-2020-02-05T13:08:39.188 can0 0x7df 0x0209020000000000
-2020-02-05T13:08:39.192 can0 0x7e8 0x1014490200544553
-2020-02-05T13:08:39.192 can0 0x7e0 0x3000050000000000
-2020-02-05T13:08:39.198 can0 0x7e8 0x215456494e303132
-2020-02-05T13:08:39.203 can0 0x7e8 0x2233343536373839
-```
-* In `isotp_[Timestamp].log`
-
-```
-2020-02-05T13:08:39.498 can0 0x7df 0x0902
-2020-02-05T13:08:39.499 can0 0x7e8 0x4902005445535456494e30313233343536373839
-```
-* In `ecu_simulator.log`
-
-```
-2020-02-05T13:08:39.189 - ecu_simulator - INFO - Receiving on OBD address 0x7df from 0x7e8 Request: 0x0902
-2020-02-05T13:08:39.190 - ecu_simulator - INFO - Requested OBD SID 0x9: Request vehicle information
-2020-02-05T13:08:39.191 - ecu_simulator - INFO - Requested PID 0x2: Vehicle Identification Number(VIN)
-2020-02-05T13:08:39.191 - ecu_simulator - INFO - Sending to 0x7e8 Response: 0x4902005445535456494e30313233343536373839
-```
-
-The log files have a max size of **1.5 M**. A new log file is generated when this size is reached.
- 
-
 
 ## License 
 
