@@ -12,6 +12,8 @@ class DataPool:
 
     def __init__(self):
         self.name = ""
+        self.version = [3]
+        self.elements = []
 
     def LoadDefinitionFromXml(self, xml_path):
         tree = ElementTree.parse(xml_path)
@@ -42,27 +44,27 @@ class DataPool:
             elements = list.find("data-elements")
             element_index = 0
             for element in elements:
-               #should only contain "data-element" nodes
-               type = element.find("type").attrib.get("base-type")
-               is_array = element.find("type").attrib.get("is-array")
-               if is_array != "false":
-                   #todo: add support for arrays
-                   logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element which is defined as an array.")
-                   raise Exception()
-               if type == "uint8" or type == "sint8":
-                   size = 1
-               elif type == "uint16" or type == "sint16":
-                   size = 2
-               elif type == "uint32" or type == "sint32" or type == "float32":
-                   size = 4
-               elif type == "uint64" or type == "sint64" or type == "float64":
-                   size = 8
-               else:
-                   logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element with unknown type " + type + ".")
-                   return None
-               new_element = { "list": list_index, "element": element_index, "size": size}
-               self.elements.append(new_element)
-               element_index += 1
+                #should only contain "data-element" nodes
+                element_type = element.find("type").attrib.get("base-type")
+                is_array = element.find("type").attrib.get("is-array")
+                if is_array != "false":
+                    #todo: add support for arrays
+                    logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element which is defined as an array.")
+                    raise Exception()
+                if element_type == "uint8" or element_type == "sint8":
+                    size = 1
+                elif element_type == "uint16" or element_type == "sint16":
+                    size = 2
+                elif element_type == "uint32" or element_type == "sint32" or element_type == "float32":
+                    size = 4
+                elif element_type == "uint64" or element_type == "sint64" or element_type == "float64":
+                    size = 8
+                else:
+                    logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element with unknown type " + element_type + ".")
+                    return None
+                new_element = { "list": list_index, "element": element_index, "size": size}
+                self.elements.append(new_element)
+                element_index += 1
             list_index += 1
         
 
@@ -81,6 +83,13 @@ class OpenSydeServer:
 
     def __init__(self):
         self.name = ""
+		self.datapools = []
+
+    def GetNumberOfDataPoolElements(self):
+        number = 0
+        for data_pool in self.datapools:
+            number += len(data_pool.elements)
+        return number
 
     #Load server definition from XML file.
     #A "node_core.xml" file which is part of an openSYDE project should be passed here.
@@ -112,7 +121,7 @@ class OpenSydeServer:
             data_pool_file_path = os.path.dirname(xml_path) + "/" + data_pool.text
             try:
                new_data_pool.LoadDefinitionFromXml(xml_path = data_pool_file_path)
-            except:
+            except Exception:
                raise
             self.datapools.append(new_data_pool)
 
