@@ -61,7 +61,7 @@ def process_service_request(request):
         logger.warning("Requested SID %s not supported", hex(sid))
     else:
         logger.warning("Invalid request")
-        return None
+    return None
 
 
 def get_diagnostic_session_control_response(request):
@@ -100,15 +100,13 @@ def get_security_access_response(request):
             positive_response = get_positive_response_sid(SECURITY_ACCESS_SID) + bytes([sub_function]) +\
                                 bytes([0,0,0,42])
             return positive_response
-        else:
-            #even value: send key
-            logger.info("SendKey Level %s", hex(sub_function - 1))
-            if len(request) != 6:
-                return get_negative_response(READ_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-            else:
-                #we are always happy :-)
-                positive_response = get_positive_response_sid(SECURITY_ACCESS_SID) + bytes([sub_function])
-                return positive_response
+        #even value: send key
+        logger.info("SendKey Level %s", hex(sub_function - 1))
+        if len(request) != 6:
+            return get_negative_response(READ_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+        #we are always happy :-)
+        positive_response = get_positive_response_sid(SECURITY_ACCESS_SID) + bytes([sub_function])
+        return positive_response
     return get_negative_response(READ_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -116,86 +114,73 @@ def get_routine_control_response(request):
     if len(request) > 3:
         sub_function = request[1]
         routine_id = request[2] << 8 | request[3]
-        match sub_function:
-            case 1:
-                mode_string = "start"
-            case 2:
-                mode_string = "stop"
-            case 3:
-                mode_string = "requestresults"
-            case _:
-                mode_string = "undefinedsubfunction" + hex(sub_function)
+
+        mode_string = {
+            1: "start",
+            2: "stop",
+            3: "requestresults"
+        }.get(sub_function, "undefinedsubfunction")
+
         if routine_id == RC_ROUTINE_READ_DATAPOOL_META_DATA:
             if sub_function == 1 and len(request) > 4:
                 data_pool_index = request[4]
-                logger.info(mode_string + "Routine: ReadDataPoolMetaData  DataPool: " + hex(request[4]))
+                logger.info(mode_string + "Routine: ReadDataPoolMetaData  DataPool: " + hex(data_pool_index))
                 if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
                     #format of response:
                     #[01] followed by three byte version info
                     #[02] followed by length of name and name as string
                     data_pool_name = osy_server.TheOpenSydeServer.datapools[data_pool_index].name
-                    positive_response = (get_positive_response_sid(ROUTINE_CONTROL_SID) +
-                                        bytes([request[1], request[2], request[3], request[4]]) +
-                                        bytes([1]) +
-                                        osy_server.TheOpenSydeServer.datapools[data_pool_index].version +
-                                        bytes([2, len(data_pool_name)]) + bytes(data_pool_name, 'utf-8'))
-                    return positive_response
-                logger.info("%s Unknown DataPool", mode_string)
-                #NRC_REQUEST_OUT_OF_RANGE: let client know this DP does not exist
-                return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
+                    response = (get_positive_response_sid(ROUTINE_CONTROL_SID) +
+                                bytes([request[1], request[2], request[3], request[4]]) +
+                                bytes([1]) +
+                                osy_server.TheOpenSydeServer.datapools[data_pool_index].version +
+                                bytes([2, len(data_pool_name)]) + bytes(data_pool_name, 'utf-8'))
+                else:
+                    logger.info("%s Unknown DataPool", mode_string)
+                    #NRC_REQUEST_OUT_OF_RANGE: let client know this DP does not exist
+                    response = get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
             else:
                 logger.info("%s Routine: ReadDataPoolMetaData: incorrect DLC or sub-function", mode_string)
-                return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+                response =  get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
         elif routine_id == RC_ROUTINE_VERIFY_DATAPOOL:
             if sub_function == 1 and len(request) > 8:
                 data_pool_index = request[4]
                 checksum = request[5] << 24 | request[6] << 16 | request[7] << 8 | request[8]
-                logger.info(mode_string + "Routine: VerifyDataPool  DataPool: " + hex(request[4]) + "  Checksum: " +
-                            hex(checksum))
+                logger.info(mode_string + "Routine: VerifyDataPool  DataPool: " + hex(data_pool_index) +
+                            "  Checksum: " + hex(checksum))
                 if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
-                    positive_response = (get_positive_response_sid(ROUTINE_CONTROL_SID) +
-                                        bytes([request[1], request[2], request[3], request[4]]) +
-                                        bytes([0])) #0: checksum matches; we are happy
-                    return positive_response
-                logger.info("%s Unknown DataPool", mode_string)
-                return get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
+                    response = (get_positive_response_sid(ROUTINE_CONTROL_SID) +
+                                bytes([request[1], request[2], request[3], request[4]]) +
+                                bytes([0])) #0: checksum matches; we are happy
+                else:
+                    logger.info("%s Unknown DataPool", mode_string)
+                    response = get_negative_response(ROUTINE_CONTROL_SID, NRC_REQUEST_OUT_OF_RANGE)
             else:
                 logger.info("%s Routine: VerifyDataPool: incorrect DLC or sub-function", mode_string)
-                return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+                response = get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
         else:
             logger.info("%s Routine: Unknown routine: %s", mode_string, hex(routine_id))
-            return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-    return get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+            response = get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+    else:
+        response = get_negative_response(ROUTINE_CONTROL_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+    return response
 
 
 def get_write_data_by_id_response(request):
     if len(request) > 2:
         identifier = request[1] << 8 | request[2]
         logger.info("WriteDataById: Requested ID %s.", hex(identifier))
-        match identifier:
-            case 0xA810:
-                if len(request) > 4:
-                    osy_server.TheOpenSydeServer.current_data_rates[0] = request[3] << 8 | request[4]
-                    logger.info("Id: DataRate1  Rate: %s.", hex(osy_server.TheOpenSydeServer.current_data_rates[0]))
-                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                logger.info("Incorrect DLC")
-                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-            case 0xA811:
-                if len(request) > 4:
-                    osy_server.TheOpenSydeServer.current_data_rates[1] = request[3] << 8 | request[4]
-                    logger.info("Id: DataRate2  Rate: %s.", hex(osy_server.TheOpenSydeServer.current_data_rates[1]))
-                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                logger.info("Incorrect DLC")
-                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-            case 0xA812:
-                if len(request) > 4:
-                    osy_server.TheOpenSydeServer.current_data_rates[2] = request[3] << 8 | request[4]
-                    logger.info("Id: DataRate3  Rate: %s.", hex(osy_server.TheOpenSydeServer.current_data_rates[2]))
-                    return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
-                logger.info("Incorrect DLC")
-                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
-            case _:
-                return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
+
+        if identifier in [0xA810, 0xA811, 0xA812]:
+            if len(request) > 4:
+                rail = identifier - 0xA810
+                osy_server.TheOpenSydeServer.current_data_rates[rail] = request[3] << 8 | request[4]
+                logger.info("Id: DataRate[%u]  Rate: %s.", rail,
+                            hex(osy_server.TheOpenSydeServer.current_data_rates[rail]))
+                return get_positive_response_sid(WRITE_DATA_BY_ID_SID) + bytes([request[1], request[2]])
+            logger.info("Incorrect DLC")
+            return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
+        return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_SUB_FUNCTION_NOT_SUPPORTED)
     return get_negative_response(WRITE_DATA_BY_ID_SID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -227,7 +212,7 @@ def get_read_dp_data_event_driven_response(request):
         osy_server.TheOpenSydeServer.current_event_based_transmissions.clear()
         logger.info("ReadDpDataEventDriven: StopAll")
         return get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes(request[1])
-    elif len(request) >= 5:
+    if len(request) >= 5:
         rail = request[1]
         data_pool_index = (request[2] >> 2) & 0x1F
         list_index = ((request[2] << 8 | request[3]) >> 3) & 0x7F

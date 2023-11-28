@@ -81,7 +81,7 @@ class DpEditorWidget(QWidget):
 
             try:
                 value_bytes = bytes.fromhex(value_string)
-            except Exception:
+            except ValueError:
                 message_box = QMessageBox()
                 message_box.setText("Value does not seem to be a valid hex value.")
                 message_box.exec()

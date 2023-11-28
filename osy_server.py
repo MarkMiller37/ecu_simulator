@@ -40,17 +40,17 @@ class DataPool:
         xml_tree = ElementTree.parse(xml_path)
         if xml_tree is None:
             logger.error("DataPool: Could not load \"%s\": Failed to parse file.", xml_path)
-            raise Exception()
+            raise SyntaxError()
 
         xml_root = xml_tree.getroot()
 
         xml_element = xml_root.find("file-version")
         if xml_element is None:
             logger.error("DataPool: Could not load \"%s\": \"file-version\" node not found.", xml_path)
-            raise Exception()
+            raise SyntaxError()
         if xml_element.text != "1":
             logger.error("DataPool: Could not load \"%s\":unsupported file version.", xml_path)
-            raise Exception()
+            raise SyntaxError()
 
         xml_data_pool = xml_root.find("data-pool")
         self.name = xml_data_pool.find("name").text
@@ -78,7 +78,7 @@ class DataPool:
                     #todo: add support for arrays
                     logger.error("DataPool: Could not load \"%s\": Contains element which is defined as an array.",
                                  xml_path)
-                    raise Exception()
+                    raise SyntaxError()
                 if element_type == "uint8" or element_type == "sint8":
                     size = 1
                 elif element_type == "uint16" or element_type == "sint16":
@@ -109,7 +109,7 @@ class OpenSydeServer:
         self.current_session = 0x01 #default session
         self.current_data_rates = [100,500,1000]
         #list of currently configured event based transmissions
-        #elements: "data_pool", "list", "element", "rail", "last_send_time"
+        #elements: "data_pool", "list", "element", "rail"
         self.current_event_based_transmissions = []
         self.current_last_event_based_send_times = [0,0,0]
 
@@ -126,17 +126,17 @@ class OpenSydeServer:
         xml_tree = ElementTree.parse(xml_path)
         if xml_tree is None:
             logger.error("OpenSydeServer: Could not load \"%s\": Failed to parse file.", xml_path)
-            raise Exception()
+            raise SyntaxError()
 
         xml_root = xml_tree.getroot()
 
         xml_element = xml_root.find("file-version")
         if xml_element is None:
             logger.error("OpenSydeServer: Could not load \"%s\":\"file-version\" node not found.", xml_path)
-            raise Exception()
+            raise SyntaxError()
         if xml_element.text != "1":
             logger.error("OpenSydeServer: Could not load \"%s\": unsupported file version.", xml_path)
-            raise Exception()
+            raise SyntaxError()
 
         #from here on we expect we really have a valid file; limited error handling done ...
         xml_node = xml_root.find("node")
@@ -150,7 +150,7 @@ class OpenSydeServer:
             data_pool_file_path = os.path.dirname(xml_path) + "/" + xml_data_pool.text
             try:
                 new_data_pool.load_definition_from_xml(xml_path = data_pool_file_path)
-            except Exception:
+            except SyntaxError:
                 raise
             self.datapools.append(new_data_pool)
 

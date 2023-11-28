@@ -22,7 +22,7 @@ def main():
 
     try:
         osy_server.TheOpenSydeServer.load_definition_from_xml(xml_path=project_path)
-    except Exception:
+    except SyntaxError:
         logger_app.logger.error("Could not load server configuration.")
 
     #initialize and populate GUI:
@@ -47,7 +47,6 @@ def main():
         time.sleep(0.1)
 
     print("Shutting down application ...")
-
 
 
 def start_can_logger_thread():
