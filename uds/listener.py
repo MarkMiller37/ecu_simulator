@@ -8,10 +8,10 @@ from loggers.logger_app import logger
 CAN_INTERFACE = ecu_config.get_can_interface()
 
 
-def start():
+def start(dummy, stop_thread):
     uds_stack_req = create_stack(rxid=UDS_REQUEST_CAN_ID, txid=UDS_RESPONSE_CAN_ID)
 
-    while True:
+    while not stop_thread():
         uds_stack_req.process()
 
         responses = services.send_event_based_responses()
@@ -26,6 +26,7 @@ def start():
                 if response is not None:
                     log_response(response)
                     uds_stack_req.send(response)
+    uds_stack_req.bus.shutdown()
 
 
 def my_error_handler(error):
@@ -36,7 +37,7 @@ def create_stack(rxid, txid):
     try:
         bus = can.Bus(channel=CAN_INTERFACE, interface='socketcan')
     except Exception as exception:
-        logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " +\
+        logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " +
                       type(exception).__name__ + ".")
     
     #configure isotp to use bus:
@@ -50,9 +51,8 @@ def create_stack(rxid, txid):
 
 
 def log_request(request):
-    logger.info("Receiving on UDS address " + hex(UDS_REQUEST_CAN_ID) + " from " + hex(UDS_RESPONSE_CAN_ID)
-                + " Request: 0x" + request.hex())
+    logger.info("Receiving on CAN ID " + hex(UDS_REQUEST_CAN_ID) + " Request: 0x" + request.hex())
 
 
 def log_response(response):
-    logger.info("Sending to " + hex(UDS_REQUEST_CAN_ID) + " Response: 0x" + response.hex())
+    logger.info("Sending on CAN ID " + hex(UDS_RESPONSE_CAN_ID) + " Response: 0x" + response.hex())

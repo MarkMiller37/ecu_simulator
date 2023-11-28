@@ -9,12 +9,12 @@ from addresses import UDS_REQUEST_CAN_ID, UDS_RESPONSE_CAN_ID
 LOG_TYPE = "isotp"
 
 
-def start():
+def start(dummy, stop_thread):
     uds_stack_req = create_stack(rxid=UDS_REQUEST_CAN_ID, txid=UDS_RESPONSE_CAN_ID)
     uds_stack_res = create_stack(rxid=UDS_RESPONSE_CAN_ID, txid=UDS_REQUEST_CAN_ID)
 
     file_path = logger_utils.create_file_path(LOG_TYPE)
-    while True:
+    while not stop_thread():
         uds_stack_req.process()
         uds_stack_res.process()
 
@@ -26,6 +26,8 @@ def start():
             logger_utils.write_to_file(file_path, None, UDS_REQUEST_CAN_ID, uds_request)
         if uds_response is not None:
             logger_utils.write_to_file(file_path, None, UDS_RESPONSE_CAN_ID, uds_response)
+    uds_stack_req.bus.shutdown()
+    uds_stack_res.bus.shutdown()
 
 
 def create_stack(rxid, txid):

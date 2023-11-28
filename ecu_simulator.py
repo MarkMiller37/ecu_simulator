@@ -1,4 +1,5 @@
 import sys
+import time
 from threading import Thread
 import ecu_config
 import osy_server
@@ -7,6 +8,8 @@ from loggers import logger_app, logger_can, logger_isotp
 
 
 def main():
+    stop_threads = False
+
     logger_app.configure()
     logger_app.logger.info("Starting ECU-Simulator")
 
@@ -17,9 +20,25 @@ def main():
     except Exception:
         logger_app.logger.error("Could not load server configuration.")
 
-    start_can_logger_thread()
-    start_isotp_logger_thread()
-    start_uds_listener_thread()
+    dummy = 0
+    can_logger_thread = Thread(target = logger_can.start, args=(dummy, lambda: stop_threads))
+    iso_tp_logger_thread = Thread(target = logger_isotp.start, args=(dummy, lambda: stop_threads))
+    uds_listener_thread = Thread(target = uds_listener.start, args=(dummy, lambda: stop_threads))
+
+    can_logger_thread.start()
+    iso_tp_logger_thread.start()
+    uds_listener_thread.start()
+
+    print("Hit enter to finish ...")
+    input()
+
+    print("Asking threads to shut down ...")
+    stop_threads = True
+    while can_logger_thread.is_alive() or iso_tp_logger_thread.is_alive() or uds_listener_thread.is_alive():
+        time.sleep(0.1)
+
+    print("Shutting down application ...")
+
 
 
 def start_can_logger_thread():
