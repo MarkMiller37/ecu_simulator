@@ -36,7 +36,7 @@ class DataPool:
         self.version = [3]
         self.lists = []
 
-    def LoadDefinitionFromXml(self, xml_path):
+    def load_definition_from_xml(self, xml_path):
         xml_tree = ElementTree.parse(xml_path)
         if xml_tree is None:
             logger.error("DataPool: Could not load \"%s\": Failed to parse file.", xml_path)
@@ -113,7 +113,7 @@ class OpenSydeServer:
         self.current_event_based_transmissions = []
         self.current_last_event_based_send_times = [0,0,0]
 
-    def GetNumberOfDataPoolElements(self):
+    def get_number_of_data_pool_elements(self):
         number = 0
         for data_pool in self.datapools:
             for dp_list in data_pool.lists:
@@ -122,7 +122,7 @@ class OpenSydeServer:
 
     #Load server definition from XML file.
     #A "node_core.xml" file which is part of an openSYDE project should be passed here.
-    def LoadDefinitionFromXml(self, xml_path):
+    def load_definition_from_xml(self, xml_path):
         xml_tree = ElementTree.parse(xml_path)
         if xml_tree is None:
             logger.error("OpenSydeServer: Could not load \"%s\": Failed to parse file.", xml_path)
@@ -149,7 +149,7 @@ class OpenSydeServer:
             new_data_pool = DataPool()
             data_pool_file_path = os.path.dirname(xml_path) + "/" + xml_data_pool.text
             try:
-                new_data_pool.LoadDefinitionFromXml(xml_path = data_pool_file_path)
+                new_data_pool.load_definition_from_xml(xml_path = data_pool_file_path)
             except Exception:
                 raise
             self.datapools.append(new_data_pool)

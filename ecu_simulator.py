@@ -21,7 +21,7 @@ def main():
     project_path = ecu_config.get_server_project_file()
 
     try:
-        osy_server.TheOpenSydeServer.LoadDefinitionFromXml(xml_path=project_path)
+        osy_server.TheOpenSydeServer.load_definition_from_xml(xml_path=project_path)
     except Exception:
         logger_app.logger.error("Could not load server configuration.")
 

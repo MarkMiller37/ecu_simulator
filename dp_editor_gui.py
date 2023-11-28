@@ -14,7 +14,7 @@ class DpEditorWidget(QWidget):
         # columns: DP, list, element, size, value(editable)
         self.ui.tableWidget.setColumnCount(5)
         self.ui.tableWidget.setHorizontalHeaderLabels(["data_pool", "list", "element", "size", "value"])
-        self.ui.tableWidget.setRowCount(osy_server.TheOpenSydeServer.GetNumberOfDataPoolElements())
+        self.ui.tableWidget.setRowCount(osy_server.TheOpenSydeServer.get_number_of_data_pool_elements())
         row = 0
         for data_pool_index, data_pool in enumerate(osy_server.TheOpenSydeServer.datapools):
             for dp_list_index, dp_list in enumerate(data_pool.lists):
@@ -54,10 +54,10 @@ class DpEditorWidget(QWidget):
         self.ui.tableWidget.setColumnWidth(3, 50)
         self.ui.tableWidget.setColumnWidth(4, 100)
 
-        self.ui.tableWidget.itemChanged.connect(self.onTableItemChanged)
+        self.ui.tableWidget.itemChanged.connect(self.on_table_item_changed)
 
 
-    def onTableItemChanged(self, item):
+    def on_table_item_changed(self, item):
         #value column ?
         if item.column() == 4:
             dp_index = item.data(Qt.UserRole)
