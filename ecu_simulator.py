@@ -1,12 +1,12 @@
 import sys
 import time
 from threading import Thread
+from PySide6.QtWidgets import QApplication
 import ecu_config
 import osy_server
 from uds import listener as uds_listener
 from loggers import logger_app, logger_can, logger_isotp
 
-from PySide6.QtWidgets import QApplication
 from dp_editor_gui import DpEditorWidget
 
 
@@ -33,7 +33,7 @@ def main():
     can_logger_thread = Thread(target = logger_can.start, args=(dummy, lambda: stop_threads))
     iso_tp_logger_thread = Thread(target = logger_isotp.start, args=(dummy, lambda: stop_threads))
     uds_listener_thread = Thread(target = uds_listener.start, args=(dummy, lambda: stop_threads))
-    
+
     can_logger_thread.start()
     iso_tp_logger_thread.start()
     uds_listener_thread.start()

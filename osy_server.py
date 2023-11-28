@@ -38,24 +38,25 @@ class DataPool:
 
     def LoadDefinitionFromXml(self, xml_path):
         xml_tree = ElementTree.parse(xml_path)
-        if xml_tree == None:
-            logger.error("DataPool: Could not load \"" + xml_path + "\": Failed to parse file.")
+        if xml_tree is None:
+            logger.error("DataPool: Could not load \"%s\": Failed to parse file.", xml_path)
             raise Exception()
 
         xml_root = xml_tree.getroot()
 
         xml_element = xml_root.find("file-version")
-        if xml_element == None:
-            logger.error("DataPool: Could not load \"" + xml_path + "\": \"file-version\" node not found.")
+        if xml_element is None:
+            logger.error("DataPool: Could not load \"%s\": \"file-version\" node not found.", xml_path)
             raise Exception()
         if xml_element.text != "1":
-            logger.error("DataPool: Could not load \"" + xml_path + "\": unsupported file version.")
+            logger.error("DataPool: Could not load \"%s\":unsupported file version.", xml_path)
             raise Exception()
-        
+
         xml_data_pool = xml_root.find("data-pool")
         self.name = xml_data_pool.find("name").text
         xml_version = xml_data_pool.find("version")
-        self.version = bytes([int(xml_version.attrib.get("major")), int(xml_version.attrib.get("minor")), int(xml_version.attrib.get("release"))])
+        self.version = bytes([int(xml_version.attrib.get("major")), int(xml_version.attrib.get("minor")),
+                              int(xml_version.attrib.get("release"))])
 
         xml_lists = xml_data_pool.find("lists")
         list_index = 0
@@ -63,19 +64,20 @@ class DataPool:
             #should only contain "list" nodes
             new_list = List()
             new_list.name = xml_dp_list.find("name").text
-            
+
             xml_elements = xml_dp_list.find("data-elements")
             element_index = 0
             for xml_element in xml_elements:
                 #should only contain "data-element" nodes
-                new_element = Element() 
+                new_element = Element()
                 new_element.name = xml_element.find("name").text
 
                 element_type = xml_element.find("type").attrib.get("base-type")
                 is_array = xml_element.find("type").attrib.get("is-array")
                 if is_array != "false":
                     #todo: add support for arrays
-                    logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element which is defined as an array.")
+                    logger.error("DataPool: Could not load \"%s\": Contains element which is defined as an array.",
+                                 xml_path)
                     raise Exception()
                 if element_type == "uint8" or element_type == "sint8":
                     size = 1
@@ -86,7 +88,8 @@ class DataPool:
                 elif element_type == "uint64" or element_type == "sint64" or element_type == "float64":
                     size = 8
                 else:
-                    logger.error("DataPool: Could not load \"" + xml_path + "\": Contains element with unknown type " + element_type + ".")
+                    logger.error("DataPool: Could not load \"%s\": Contains element with unknown type %s.",
+                                 xml_path, element_type)
                     return None
                 new_element.size = size
                 new_element.set_value(bytes([0] * size))
@@ -94,7 +97,7 @@ class DataPool:
                 element_index += 1
             self.lists.append(new_list)
             list_index += 1
-        
+
 
 class OpenSydeServer:
     def __init__(self):
@@ -113,26 +116,26 @@ class OpenSydeServer:
     def GetNumberOfDataPoolElements(self):
         number = 0
         for data_pool in self.datapools:
-            for list in data_pool.lists:
-               number += len(list.elements)
+            for dp_list in data_pool.lists:
+                number += len(dp_list.elements)
         return number
 
     #Load server definition from XML file.
     #A "node_core.xml" file which is part of an openSYDE project should be passed here.
     def LoadDefinitionFromXml(self, xml_path):
         xml_tree = ElementTree.parse(xml_path)
-        if xml_tree == None:
-            logger.error("OpenSydeServer: Could not load \"" + xml_path + "\": Failed to parse file.")
+        if xml_tree is None:
+            logger.error("OpenSydeServer: Could not load \"%s\": Failed to parse file.", xml_path)
             raise Exception()
 
         xml_root = xml_tree.getroot()
 
         xml_element = xml_root.find("file-version")
-        if xml_element == None:
-            logger.error("OpenSydeServer: Could not load \"" + xml_path + "\": \"file-version\" node not found.")
+        if xml_element is None:
+            logger.error("OpenSydeServer: Could not load \"%s\":\"file-version\" node not found.", xml_path)
             raise Exception()
         if xml_element.text != "1":
-            logger.error("OpenSydeServer: Could not load \"" + xml_path + "\": unsupported file version.")
+            logger.error("OpenSydeServer: Could not load \"%s\": unsupported file version.", xml_path)
             raise Exception()
 
         #from here on we expect we really have a valid file; limited error handling done ...
@@ -146,9 +149,9 @@ class OpenSydeServer:
             new_data_pool = DataPool()
             data_pool_file_path = os.path.dirname(xml_path) + "/" + xml_data_pool.text
             try:
-               new_data_pool.LoadDefinitionFromXml(xml_path = data_pool_file_path)
+                new_data_pool.LoadDefinitionFromXml(xml_path = data_pool_file_path)
             except Exception:
-               raise
+                raise
             self.datapools.append(new_data_pool)
 
 # Singleton of the server

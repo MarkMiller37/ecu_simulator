@@ -67,7 +67,7 @@ class DpEditorWidget(QWidget):
             element = osy_server.TheOpenSydeServer.datapools[dp_index].lists[list_index].elements[element_index]
 
             value_string = item.text()
-            if (len(value_string) != (element.size* 2)):
+            if len(value_string) != element.size * 2:
                 message_box = QMessageBox()
                 message_box.setText("Length of string does not match size of element.")
                 message_box.exec()
@@ -94,5 +94,5 @@ class DpEditorWidget(QWidget):
                 return
 
             element.set_value(value_bytes)
-            print("DP value changed in GUI. Element: " + str(dp_index) + "." + str(list_index) + "." + str(element_index) + ".")
-
+            print("DP value changed in GUI. Element: " + str(dp_index) + "." + str(list_index) + "." +
+                  str(element_index) + ".")

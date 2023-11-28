@@ -1,5 +1,5 @@
-import can
 import time
+import can
 import osy_tp
 from loggers import logger_utils
 from loggers.logger_utils import CAN_INTERFACE
@@ -37,12 +37,13 @@ def create_stack(rxid, txid):
     try:
         bus = can.Bus(channel=CAN_INTERFACE, interface='socketcan')
     except Exception as exception:
-        logger.error("Could not access can interface \"" + CAN_INTERFACE + "\". Exception type: " + type(exception).__name__ + ".")
-    
+        logger.error("Could not access can interface \"%s\". Exception type: %s.",
+                     CAN_INTERFACE, type(exception).__name__)
+
     #configure isotp to use bus:
     tp_parameters = { "listen_mode" : True }
-    address = osy_tp.Address(addressing_mode= osy_tp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid, params=tp_parameters)
+    address = osy_tp.Address(addressing_mode= osy_tp.AddressingMode.Normal_29bits, rxid=rxid, txid=txid,
+                             arams=tp_parameters)
     stack = osy_tp.CanStack(bus, address=address)
 
     return stack
-
