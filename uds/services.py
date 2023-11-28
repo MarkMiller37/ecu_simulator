@@ -51,7 +51,6 @@ SERVICES = [
     {"id": TESTER_PRESENT_SID, "description": "TesterPresent", "response": lambda request: get_tester_present_response(request)}
 ]
 
-
 def process_service_request(request):
     if request is not None and len(request) >= 1:
         sid = request[0]
@@ -203,18 +202,19 @@ def get_read_dp_data_by_id_response(request):
         list_index = ((request[1] << 8 | request[2]) >> 3) & 0x7F
         element_index = (request[2] << 8 | request[3]) & 0x7FF
         logger.info("ReadDpDataById: Requested ID " + hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index))
-        if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
-            for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-                if (element.get("list") == list_index) and (element.get("element") == element_index):
-                    #element known
-                    element_size = element.get("size")
-                    #to get non-zero values we return the size as value of all returned bytes
-                    return (get_positive_response_sid(READ_DP_DATA_BY_ID) + bytes([request[1], request[2], request[3]]) +
-                           bytes([element_size] * element_size))
-            return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
-        else:
-            logger.info("Unknown DataPool")
-            return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
+
+        if data_pool_index < len(osy_server.TheOpenSydeServer.datapools) and\
+           list_index < len(osy_server.TheOpenSydeServer.datapools[data_pool_index].lists) and\
+           element_index < len(osy_server.TheOpenSydeServer.datapools[data_pool_index].lists[list_index].elements):
+            #element known
+            element = osy_server.TheOpenSydeServer.datapools[data_pool_index].lists[list_index].elements[element_index]
+            element_size = element.size
+            
+            value = element.get_value();
+            return (get_positive_response_sid(READ_DP_DATA_BY_ID) + bytes([request[1], request[2], request[3]]) + value)
+        
+        logger.info("Unknown DataPool, list or element.")
+        return get_negative_response(READ_DP_DATA_BY_ID, NRC_REQUEST_OUT_OF_RANGE)
     return get_negative_response(READ_DP_DATA_BY_ID, NRC_INCORRECT_MESSAGE_LENGTH_OR_INVALID_FORMAT)
 
 
@@ -240,18 +240,16 @@ def get_read_dp_data_event_driven_response(request):
 
         #do we know the requested element ?
         found = False
-        if data_pool_index < len(osy_server.TheOpenSydeServer.datapools):
-            for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-                if (element.get("list") == list_index) and (element.get("element") == element_index):
-                    #element known
-                    element_size = element.get("size")
-                    if element_size <= 4:
-                        found = True
-                        break
-            if not found:
-                return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
-        else:
-            logger.info("Unknown DataPool")
+
+        if data_pool_index < len(osy_server.TheOpenSydeServer.datapools) and\
+           list_index < len(osy_server.TheOpenSydeServer.datapools[data_pool_index].lists) and\
+           element_index < len(osy_server.TheOpenSydeServer.datapools[data_pool_index].lists[list_index].elements):
+            #element known
+            element_size = osy_server.TheOpenSydeServer.datapools[data_pool_index].lists[list_index].elements[element_index].size
+            if element_size <= 4:
+                found = True
+        if not found:
+            logger.info("Unknown DataPool, list or element. Or size > 4.")
             return get_negative_response(READ_DP_DATA_EVENT_DRIVEN, NRC_REQUEST_OUT_OF_RANGE)
 
         #threshold will be ignored; does not really bother client if we send too often
@@ -287,20 +285,17 @@ def send_event_based_responses():
                     element_index = transmission.get("element")
 
                     #find element in DP:
-                    for element in osy_server.TheOpenSydeServer.datapools[data_pool_index].elements:
-                        if (element.get("list") == list_index) and (element.get("element") == element_index):
-                            element_size = element.get("size")
-                            #to get non-zero values we use now_ms
-                            response = (get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes(
-                                       [(data_pool_index << 2) | (list_index >> 5),
-                                       ((list_index) << 3) | (element_index >> 8),
-                                       element_index & 0xFF]) +
-                                       bytes([int(now_ms) & 0xFF] * element_size))
-                            responses.append(response)
-                            logger.info("ReadDpDataEventDriven: Sending value for element " +
-                                        hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) +
-                                        "  Type: cyclic  Rail: " + hex(rail))
-                            break
+                    element = osy_server.TheOpenSydeServer.datapools[data_pool_index].lists[list_index].elements[element_index]
+                    element_size = element.size
+                    value = element.get_value();
+                    response = (get_positive_response_sid(READ_DP_DATA_EVENT_DRIVEN) + bytes(
+                                [(data_pool_index << 2) | (list_index >> 5),
+                                ((list_index) << 3) | (element_index >> 8),
+                                element_index & 0xFF]) + value)
+                    responses.append(response)
+                    logger.info("ReadDpDataEventDriven: Sending value for element " +
+                                hex(data_pool_index) + "." + hex(list_index) + "." + hex(element_index) +
+                                "  Type: cyclic  Rail: " + hex(rail) +  "Value: " + str(value))
     return responses
 
 

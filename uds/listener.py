@@ -13,7 +13,7 @@ def start(dummy, stop_thread):
     uds_stack_req = create_stack(rxid=UDS_REQUEST_CAN_ID, txid=UDS_RESPONSE_CAN_ID)
 
     while not stop_thread():
-        time.sleep(0.1)
+        time.sleep(0)
         uds_stack_req.process()
 
         responses = services.send_event_based_responses()

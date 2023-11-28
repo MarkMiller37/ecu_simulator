@@ -6,8 +6,13 @@ import osy_server
 from uds import listener as uds_listener
 from loggers import logger_app, logger_can, logger_isotp
 
+from PySide6.QtWidgets import QApplication
+from dp_editor_gui import DpEditorWidget
+
 
 def main():
+    app = QApplication(sys.argv)
+
     stop_threads = False
 
     logger_app.configure()
@@ -20,17 +25,21 @@ def main():
     except Exception:
         logger_app.logger.error("Could not load server configuration.")
 
-    dummy = 0
+    #initialize and populate GUI:
+    the_editor_widget = DpEditorWidget()
+    the_editor_widget.show()
+
+    dummy = 0 # first parameter of args needs to be integer
     can_logger_thread = Thread(target = logger_can.start, args=(dummy, lambda: stop_threads))
     iso_tp_logger_thread = Thread(target = logger_isotp.start, args=(dummy, lambda: stop_threads))
     uds_listener_thread = Thread(target = uds_listener.start, args=(dummy, lambda: stop_threads))
-
+    
     can_logger_thread.start()
     iso_tp_logger_thread.start()
     uds_listener_thread.start()
 
-    print("Hit enter to finish ...")
-    input()
+    # show GUI; will block until widget is closed
+    app.exec()
 
     print("Asking threads to shut down ...")
     stop_threads = True

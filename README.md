@@ -9,6 +9,8 @@ Modified to mock an ECU using the UDS-based openSYDE protocol.
 
 Datapool configuration can be loaded from openSYDE "node_core.xml" file.
 
+Datapool values to be returned to client can be edited in GUI.
+
 Connect from openSYDE Dashboard basically works:
 
 * get current session
@@ -34,14 +36,14 @@ Support services for Device Configuration; a special TP frame type is used
 * Python3
 * [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt) Implementation of the CAN protocol. This kernel module is part of Linux. 
 * [python-can](https://python-can.readthedocs.io/en/master/installation.html) 
+* PySide6 (Python wrapper for Qt framework)
 
 ## Usage 
 
-Install required python library.
+Install required python libraries with pip.
 I did so using a virtual python environment.
-Install the python-can package via pip.
-Configure server's openSYDE node-id to use in ecu_config.json
-Configure CAN interface to use in ecu_config.json (verified only with virtual vcan0)
+
+Configure settings in ecu_config.json
 
 Set up CAN hardware interface. e.g.
 ```
