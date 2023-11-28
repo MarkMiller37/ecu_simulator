@@ -1,6 +1,7 @@
 import can
 import osy_tp
 import ecu_config
+import time
 from uds import services
 from addresses import UDS_REQUEST_CAN_ID, UDS_RESPONSE_CAN_ID
 from loggers.logger_app import logger
@@ -12,6 +13,7 @@ def start(dummy, stop_thread):
     uds_stack_req = create_stack(rxid=UDS_REQUEST_CAN_ID, txid=UDS_RESPONSE_CAN_ID)
 
     while not stop_thread():
+        time.sleep(0.1)
         uds_stack_req.process()
 
         responses = services.send_event_based_responses()

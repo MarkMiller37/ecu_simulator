@@ -1,4 +1,5 @@
 import can
+import time
 import osy_tp
 from loggers import logger_utils
 from loggers.logger_utils import CAN_INTERFACE
@@ -15,6 +16,8 @@ def start(dummy, stop_thread):
 
     file_path = logger_utils.create_file_path(LOG_TYPE)
     while not stop_thread():
+        time.sleep(0.1)
+
         uds_stack_req.process()
         uds_stack_res.process()
 
